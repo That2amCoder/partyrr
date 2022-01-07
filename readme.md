@@ -27,8 +27,9 @@ Essentially it is web based spotify queing system. You can allow anybody with an
 
 ## How to build
 1. Clone the repo
-2. ``go build``
-3. Run the binary
+2. Configure the dummy.env and rename it to .env
+3. ``go build``
+4. Run the binary
    
 ## Bugs
 Found a bug or have a suggestion? Use the github issue tracker!
