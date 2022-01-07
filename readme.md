@@ -6,7 +6,7 @@ You may wonder what exactly it does! Well I wonder that too.
 
 Essentially it is web based spotify queing system. You can allow anybody with an invite code to add music from their device onto your party playlist without passing your phone. It is in very early development, but tons of features are planned! It has a simple interface as shown below:
 
-    ![](https://cdn.discordapp.com/attachments/880772858874310657/928652134466093136/unknown.png)
+![](https://cdn.discordapp.com/attachments/880772858874310657/928652134466093136/unknown.png)
 
 ## How to use
 1. Download the binary of your system found in the releases
@@ -34,6 +34,6 @@ Essentially it is web based spotify queing system. You can allow anybody with an
 Found a bug or have a suggestion? Use the github issue tracker!
 
 ## Credits
-- TheMalwaresGuy
+- The2amCoder
 - Delta6862
 
