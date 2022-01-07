@@ -1,0 +1,60 @@
+<html>
+<head>
+    <title>Party</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <style>
+        .right-wrapper {
+          float: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Party</h1>
+        <form action="addsong" method="post">
+            <div class="form-group">
+                <img src="data:image/png;base64, {{ .QRCode }}" height="100" width="100" align="left">
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" id="song" name="song" placeholder="Enter name">
+                    <input type="hidden" class="form-control" id="partyID" name="partyID" value={{ .PartyID }}>
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-info">Add song</button>
+                    </span>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="container">
+        <h1>Songs</h1>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Artist</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range $val := .Playlist}}               
+                    <tr>
+                        <td>{{ $val.Track.Name }}</td>
+                        <td> 
+                            {{range $val := $val.Track.Artists}}
+                                {{ $val.Name }}
+                            {{end}}
+
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</body>
+<script>
+    //every 10 seconds refresh the page
+    setInterval(function(){
+        window.location.reload(1);
+    }, 10000);
+</script>
+</html>
