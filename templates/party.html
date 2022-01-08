@@ -44,13 +44,10 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
 
 </script>
-<script>
-    //make a updatetable function
+<script>  
     function updateTable(partyID) {
-        //clear the table
-        $("#song-table-body").empty();
-
         $.getJSON("/party/" + partyID + "/songs", function(data) {
+            $("#song-table-body").empty();
             //For each song in the playlist
             $.each(data, function(i, song) {
                 $("#song-table-body").append(
@@ -62,6 +59,7 @@
             });
         });
     }
+
     //Get the current partyID from the URL
     var partyID = window.location.href.split("/").pop();
     //set the partyID in the form
