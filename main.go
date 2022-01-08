@@ -47,9 +47,7 @@ func main() {
 	//TODO: Clear up the code below
 	address = os.Getenv("ADDRESS")
 	redirectURI := "http://" + address + "/callback"
-	clientID := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	auth := spotifyauth.New(spotifyauth.WithClientID(clientID), spotifyauth.WithClientSecret(clientSecret), spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate, spotifyauth.ScopePlaylistModifyPrivate))
+	auth := spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate, spotifyauth.ScopePlaylistModifyPrivate))
 
 	// Create a new router
 	r := mux.NewRouter()
@@ -172,21 +170,26 @@ func main() {
 		partyID, err := dbhandle.GetPartyID(invitecode)
 		if err != nil {
 			fmt.Printf("Error converting partyID to int\n")
+			fmt.Println(err)
 			http.Error(w, "Invalid partyID", http.StatusBadRequest)
+			return
 		}
 
 		tok, err := dbhandle.Getoath(partyID)
 		if err != nil {
 			fmt.Printf("Error getting oauth token\n")
 			http.Error(w, "Invalid partyID", http.StatusBadRequest)
+			return
 		}
 
-		spotifyhndl := SpotifyHandle.NewSpotifyHandle(tok)
 		playlistID, _ := dbhandle.GetPlaylist(partyID)
+		spotifyhndl := SpotifyHandle.NewSpotifyHandle(tok)
 
 		err = spotifyhndl.AddSong(playlistID, songName)
 		if err != nil {
-			http.Error(w, "Invalid partyID", http.StatusBadRequest)
+			http.Error(w, "Invalid Song", http.StatusBadRequest)
+			fmt.Println(err)
+			return
 		}
 		http.Redirect(w, r, "/party/"+invitecode, http.StatusTemporaryRedirect)
 	})
