@@ -65,8 +65,8 @@ func (p *PartyDB) CreateQueue(partyID int, playlistlnk string) error {
 	return nil
 }
 
-func (p *PartyDB) GetPlaylist(id int) (string, error) {
-	row, err := p.db.Query("SELECT playlist FROM que WHERE partyID = ?", id)
+func (p *PartyDB) GetPlaylist(partyID int) (string, error) {
+	row, err := p.db.Query("SELECT playlist FROM que WHERE partyID = ?", partyID)
 	if err != nil {
 		return "", err
 	}

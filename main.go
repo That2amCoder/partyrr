@@ -5,13 +5,14 @@ package main
 import (
 	"encoding/base64"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
-	dbhandler "partyrr/src/database"
-	SpotifyHandle "partyrr/src/spotifyhandler"
+	dbhandler "partyrr/database"
+	SpotifyHandle "partyrr/spotifyhandler"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -185,7 +186,6 @@ func main() {
 	r.HandleFunc("/party/{invlink}", func(w http.ResponseWriter, r *http.Request) {
 		// Create the party
 		invlink := mux.Vars(r)["invlink"]
-		fmt.Printf("Invite link: %s\n", invlink)
 		partyID, err := dbhandle.GetPartyID(invlink)
 		if err != nil {
 			fmt.Printf("%s\n", err)
@@ -234,6 +234,42 @@ func main() {
 		// Serve the party.html template found in /templates
 		tpl.ExecuteTemplate(w, "party.html", data)
 		//
+	}).Methods("GET", "POST")
+
+	//Make a api call to get the user's playlists
+	r.HandleFunc("/party/{invlink}/songs", func(w http.ResponseWriter, r *http.Request) {
+		// Get the name and host from the request
+		invlink := mux.Vars(r)["invlink"]
+
+		partyID, err := dbhandle.GetPartyID(invlink)
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			http.Error(w, "Invalid link", http.StatusBadRequest)
+			return
+		}
+
+		tok, err := dbhandle.Getoath(partyID)
+		if err != nil {
+			//print the error
+			fmt.Printf("%s\n", err)
+			http.Error(w, "Invalid link", http.StatusBadRequest)
+			return
+		}
+
+		playlistID, err := dbhandle.GetPlaylist(partyID)
+		if err != nil {
+			//print the error
+			fmt.Printf("%s\n", err)
+			http.Error(w, "Broken link", http.StatusBadRequest)
+			return
+		}
+
+		spotifyhndl := SpotifyHandle.NewSpotifyHandle(tok)
+		playlist := spotifyhndl.GetPlaylist(playlistID)
+
+		//return the playlist in a json format to the caller
+		json.NewEncoder(w).Encode(playlist)
+
 	}).Methods("GET", "POST")
 
 	r.HandleFunc("/joinParty", func(w http.ResponseWriter, r *http.Request) {

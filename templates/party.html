@@ -28,33 +28,53 @@
     </div>
     <div class="container">
         <h1>Songs</h1>
-        <table class="table table-striped">
+        <table id="song-table" class="table table-striped">
             <thead>
                 <tr>
                     <th>Name</th>
                     <th>Artist</th>
                 </tr>
             </thead>
-            <tbody>
-                {{range $val := .Playlist}}               
-                    <tr>
-                        <td>{{ $val.Track.Name }}</td>
-                        <td> 
-                            {{range $val := $val.Track.Artists}}
-                                {{ $val.Name }}
-                            {{end}}
-
-                        </td>
-                    </tr>
-                {{end}}
+            <tbody id="song-table-body">
             </tbody>
         </table>
     </div>
 </body>
+<!-- Import Jquery -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+
+</script>
 <script>
+    //make a updatetable function
+    function updateTable(partyID) {
+        //clear the table
+        $("#song-table-body").empty();
+
+        $.getJSON("/party/" + partyID + "/songs", function(data) {
+            //For each song in the playlist
+            $.each(data, function(i, song) {
+                $("#song-table-body").append(
+                    "<tr>" +
+                    "<td>" + song.track.name + "</td>" +
+                    "<td>" + song.track.artists[0].name + "</td>" +
+                    "</tr>"
+                );
+            });
+        });
+    }
+    //Get the current partyID from the URL
+    var partyID = window.location.href.split("/").pop();
+    //set the partyID in the form
+    $("#partyID").val(partyID);
+    
+    //update the table
+    updateTable(partyID);
     //every 10 seconds refresh the page
     setInterval(function(){
-        window.location.reload(1);
+        updateTable(partyID);
     }, 10000);
+
+    //Onload do the following:
+    
 </script>
 </html>
