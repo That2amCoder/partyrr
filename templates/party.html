@@ -15,10 +15,10 @@
         <h1>Party</h1>
         <form action="addsong" method="post">
             <div class="form-group">
-                <img src="data:image/png;base64, {{ .QRCode }}" height="100" width="100" align="left">
+                <img src="" id="qrCode" height="100" width="100" align="left">
                 <div class="input-group input-group-lg">
                     <input type="text" class="form-control" id="song" name="song" placeholder="Enter name">
-                    <input type="hidden" class="form-control" id="partyID" name="partyID" value={{ .PartyID }}>
+                    <input type="hidden" class="form-control" id="partyID" name="partyID" value="">
                     <span class="input-group-btn">
                         <button type="submit" class="btn btn-info">Add song</button>
                     </span>
@@ -66,6 +66,8 @@
     var partyID = window.location.href.split("/").pop();
     //set the partyID in the form
     $("#partyID").val(partyID);
+    //Set the source of the image to the qr code
+    $("#qrCode").attr("src", "/party/" + partyID + "/qr");
     
     //update the table
     updateTable(partyID);

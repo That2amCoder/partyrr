@@ -3,7 +3,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -13,14 +12,12 @@ import (
 	"os"
 	dbhandler "partyrr/database"
 	SpotifyHandle "partyrr/spotifyhandler"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 	"github.com/skip2/go-qrcode"
-	spotify "github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"golang.org/x/oauth2"
 )
@@ -103,6 +100,19 @@ func main() {
 		//redirect the user to index
 		http.Redirect(w, r, "/partycreator", http.StatusTemporaryRedirect)
 	})
+	r.HandleFunc("/joinParty", func(w http.ResponseWriter, r *http.Request) {
+		// get the partyID from the request
+		inviteCode := r.FormValue("inviteCode")
+		//TODO add statistics
+		//redirect to the party
+		http.Redirect(w, r, "/party/"+inviteCode, http.StatusTemporaryRedirect)
+	}).Methods("POST")
+
+	r.HandleFunc("/partycreator", func(w http.ResponseWriter, r *http.Request) {
+		// Render the "partycreator.html" template
+		tpl := template.Must(template.ParseFiles("./templates/partycreator.html"))
+		tpl.ExecuteTemplate(w, "partycreator.html", nil)
+	}).Methods("GET")
 
 	// Create party endpoint
 	r.HandleFunc("/createParty", func(w http.ResponseWriter, r *http.Request) {
@@ -160,80 +170,40 @@ func main() {
 	r.HandleFunc("/party/addsong", func(w http.ResponseWriter, r *http.Request) {
 		// Get the name and host from the request
 		songName := r.FormValue("song")
-		partyID := r.FormValue("partyID")
-		//try to convert the partID to int
-		partyIDInt, err := strconv.Atoi(partyID)
+		invitecode := r.FormValue("partyID")
+		//try to convert the invitecode to the partyID
+		partyID, err := dbhandle.GetPartyID(invitecode)
 		if err != nil {
 			fmt.Printf("Error converting partyID to int\n")
 			http.Error(w, "Invalid partyID", http.StatusBadRequest)
 		}
 
-		tok, err := dbhandle.Getoath(partyIDInt)
-
+		tok, err := dbhandle.Getoath(partyID)
+		fmt.Println(tok.RefreshToken)
 		if err != nil {
 			fmt.Printf("Error getting oauth token\n")
 			http.Error(w, "Invalid partyID", http.StatusBadRequest)
 		}
 
 		spotifyhndl := SpotifyHandle.NewSpotifyHandle(tok)
+		playlistID, _ := dbhandle.GetPlaylist(partyID)
 
-		playlistID, _ := dbhandle.GetPlaylist(partyIDInt)
 		spotifyhndl.AddSong(playlistID, songName)
-		partylink, _ := dbhandle.GetInvitelink(partyIDInt)
-		http.Redirect(w, r, "/party/"+partylink, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/party/"+invitecode, http.StatusTemporaryRedirect)
 	})
 
 	r.HandleFunc("/party/{invlink}", func(w http.ResponseWriter, r *http.Request) {
 		// Create the party
 		invlink := mux.Vars(r)["invlink"]
-		partyID, err := dbhandle.GetPartyID(invlink)
+		_, err := dbhandle.GetPartyID(invlink)
 		if err != nil {
 			fmt.Printf("%s\n", err)
 			http.Error(w, "Invalid link", http.StatusBadRequest)
 			return
 		}
 
-		tok, err := dbhandle.Getoath(partyID)
-		if err != nil {
-			//print the error
-			fmt.Printf("%s\n", err)
-			http.Error(w, "Invalid link", http.StatusBadRequest)
-			return
-		}
-
-		playlistID, err := dbhandle.GetPlaylist(partyID)
-		if err != nil {
-			//print the error
-			fmt.Printf("%s\n", err)
-			http.Error(w, "Broken link", http.StatusBadRequest)
-			return
-		}
-
-		spotifyhndl := SpotifyHandle.NewSpotifyHandle(tok)
-		playlist := spotifyhndl.GetPlaylist(playlistID)
-
-		// Generate a new qr code to a buffer and convert it to base64
-		qrCode, err := qrcode.Encode("http://"+address+"/party/"+invlink, qrcode.Medium, 256)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		qrCodeBase64 := base64.StdEncoding.EncodeToString(qrCode)
-		tpl := template.Must(template.ParseFiles("./templates/party.html"))
-		//initialise a return struct to pass to the template
-		data := struct {
-			PartyID  int
-			Playlist []spotify.PlaylistTrack
-			QRCode   string
-		}{
-			PartyID:  partyID,
-			Playlist: playlist,
-			QRCode:   qrCodeBase64,
-		}
-		// Serve the party.html template found in /templates
-		tpl.ExecuteTemplate(w, "party.html", data)
-		//
+		//serve the file
+		http.ServeFile(w, r, "./templates/party.html")
 	}).Methods("GET", "POST")
 
 	//Make a api call to get the user's playlists
@@ -272,19 +242,21 @@ func main() {
 
 	}).Methods("GET", "POST")
 
-	r.HandleFunc("/joinParty", func(w http.ResponseWriter, r *http.Request) {
-		// get the partyID from the request
-		inviteCode := r.FormValue("inviteCode")
-		//TODO add statistics
-		//redirect to the party
-		http.Redirect(w, r, "/party/"+inviteCode, http.StatusTemporaryRedirect)
-	}).Methods("POST")
+	r.HandleFunc("/party/{invlink}/qr", func(w http.ResponseWriter, r *http.Request) {
+		// Get the name and host from the request
+		invlink := mux.Vars(r)["invlink"]
 
-	r.HandleFunc("/partycreator", func(w http.ResponseWriter, r *http.Request) {
-		// Render the "partycreator.html" template
-		tpl := template.Must(template.ParseFiles("./templates/partycreator.html"))
-		tpl.ExecuteTemplate(w, "partycreator.html", nil)
-	}).Methods("GET")
+		qrCode, err := qrcode.Encode("http://"+address+"/party/"+invlink, qrcode.Medium, 256)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//return the qrcode image
+		w.Header().Set("Content-Type", "image/png")
+		w.Write(qrCode)
+
+	}).Methods("GET", "POST")
 
 	// Create a CORS object to allow cross-origin requests
 	c := cors.New(cors.Options{
