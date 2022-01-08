@@ -132,9 +132,6 @@ func main() {
 		// Create the party
 		fmt.Printf("Creating party with name: %s and host: %s\n", name, host)
 
-		//print current username
-		fmt.Printf("Current user: %s\n", tok.AccessToken)
-
 		//save the token
 		tokenID, err := dbhandle.SaveToken(tok)
 		if err != nil {
@@ -187,7 +184,10 @@ func main() {
 		spotifyhndl := SpotifyHandle.NewSpotifyHandle(tok)
 		playlistID, _ := dbhandle.GetPlaylist(partyID)
 
-		spotifyhndl.AddSong(playlistID, songName)
+		err = spotifyhndl.AddSong(playlistID, songName)
+		if err != nil {
+			http.Error(w, "Invalid partyID", http.StatusBadRequest)
+		}
 		http.Redirect(w, r, "/party/"+invitecode, http.StatusTemporaryRedirect)
 	})
 

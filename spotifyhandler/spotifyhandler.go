@@ -63,14 +63,15 @@ func (s *SpotifyHandle) CreatePlaylistID(playlistName string) string {
 	return playlistID2
 }
 
-func (s *SpotifyHandle) AddSong(playlistID string, songName string) {
+func (s *SpotifyHandle) AddSong(playlistID string, songName string) error {
 	ctx := context.Background()
 
 	// Add a song to the playlist
 	// Search for the song in the spotify api
 	results, err := s.sp.Search(ctx, songName, spotify.SearchTypeTrack)
-	if err != nil {
-		fmt.Println(err)
+	if err != nil || results.Tracks.Total == 0 {
+		//return not found error
+		return err
 	}
 	// Get the first result from results
 	track := results.Tracks.Tracks[0]
@@ -78,4 +79,5 @@ func (s *SpotifyHandle) AddSong(playlistID string, songName string) {
 	//func (c *Client) AddTracksToPlaylist(playlistID ID, trackIDs ...ID) (snapshotID string, err error)
 
 	s.sp.AddTracksToPlaylist(ctx, spotify.ID(playlistID), track.ID)
+	return nil
 }
