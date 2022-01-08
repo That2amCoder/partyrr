@@ -179,7 +179,6 @@ func main() {
 		}
 
 		tok, err := dbhandle.Getoath(partyID)
-		fmt.Println(tok.RefreshToken)
 		if err != nil {
 			fmt.Printf("Error getting oauth token\n")
 			http.Error(w, "Invalid partyID", http.StatusBadRequest)
